@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Votación - Administrador</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .pais {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    select {
+      width: 60px;
+      padding: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Eurovisión 2025</h1>
+  <h2>Asignar posiciones oficiales</h2>
+  <div id="listaPaises"></div>
+  <div style="text-align:center;"><button onclick='compararResultados()'>Comparar Resultados</button></div>
+  <button onclick="guardarVotacion()">Guardar</button>
+  <p id="mensajeConfirmacion" style="text-align:center; color:green; font-weight:bold;"></p>
+
+  <script>
+    const participante = "Administrador";
+    const tipo_guardado = "posiciones_oficiales";
+    const mensaje_ok = "¡Posiciones oficiales guardadas correctamente!";
+    const paises = [
+      "Noruega – Kyle Alessandro (Lighter)",
+      "Luxemburgo – Laura Thorn (La poupée monte le son)",
+      "Estonia – Tommy Cash (Espresso Macchiato)",
+      "Israel – Yuval Raphael (New Day Will Rise)",
+      "Lituania – Katarsis (Tavo akys)",
+      "España – Melody (Esa diva)",
+      "Ucrania – Ziferblat (Bird of Pray)",
+      "Reino Unido – Remember Monday (What the Hell Just Happened?)",
+      "Austria – JJ (Wasted Love)",
+      "Islandia – VÆB (Róa)",
+      "Letonia – Tautumeitas (Bur man laimi)",
+      "Países Bajos – Claude (C'est la vie)",
+      "Finlandia – Erika Vikman (Ich komme)",
+      "Italia – Lucio Corsi (Volevo essere un duro)",
+      "Polonia – Justyna Steczkowska (Gaja)",
+      "Alemania – Abor & Tynna (Baller)",
+      "Grecia – Klavdia (Asteromáta)",
+      "Armenia – Parg (Survivor)",
+      "Suiza – Zoë Më (Voyage)",
+      "Malta – Miriana Conte (Serving)",
+      "Portugal – Napa (Deslocado)",
+      "Dinamarca – Sissal (Hallucination)",
+      "Suecia – KAJ (Bara Bada Bastu)",
+      "Francia – Louane (Maman)",
+      "San Marino – Gabry Ponte (Tutta l'Italia)",
+      "Albania – Shkodra Elektronike (Zjerm)"
+    ];
+
+    function generarOptions(excepto) {
+      let opciones = "<option value=''></option>";
+      for (let i = 1; i <= 26; i++) {
+        if (!excepto.has(i)) {
+          opciones += `<option value='${i}'>${i}</option>`;
+        }
+      }
+      return opciones;
+    }
+
+    const lista = document.getElementById("listaPaises");
+
+    paises.forEach((pais, i) => {
+      const div = document.createElement("div");
+      div.className = "pais";
+      div.innerHTML = `
+        <span>${i + 1}. ${pais}</span>
+        <select id="posicion-${i}" onchange="actualizarOpciones()">
+          <option value='1'>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option><option value='6'>6</option><option value='7'>7</option><option value='8'>8</option><option value='9'>9</option><option value='10'>10</option><option value='11'>11</option><option value='12'>12</option><option value='13'>13</option><option value='14'>14</option><option value='15'>15</option><option value='16'>16</option><option value='17'>17</option><option value='18'>18</option><option value='19'>19</option><option value='20'>20</option><option value='21'>21</option><option value='22'>22</option><option value='23'>23</option><option value='24'>24</option><option value='25'>25</option><option value='26'>26</option>
+        </select>
+      `;
+      lista.appendChild(div);
+    });
+
+    function actualizarOpciones() {
+      const usados = new Set();
+      for (let i = 0; i < paises.length; i++) {
+        const val = document.getElementById(`posicion-${i}`).value;
+        if (val) usados.add(parseInt(val));
+      }
+
+      for (let i = 0; i < paises.length; i++) {
+        const select = document.getElementById(`posicion-${i}`);
+        const current = select.value;
+        select.innerHTML = generarOptions(usados);
+        if (current) {
+          select.innerHTML = `<option value='${current}'>${current}</option>` + select.innerHTML;
+          select.value = current;
+        }
+      }
+    }
+
+    function guardarVotacion() {
+      const votacion = [];
+      const usados = new Set();
+      let error = false;
+
+      for (let i = 0; i < paises.length; i++) {
+        const val = parseInt(document.getElementById("posicion-" + i).value);
+        if (!val || usados.has(val)) {
+          error = true;
+          break;
+        }
+        usados.add(val);
+        votacion.push(val);
+      }
+
+      if (error || votacion.length !== 26) {
+        alert("Debes asignar 26 posiciones únicas del 1 al 26.");
+        return;
+      }
+
+      localStorage.setItem(tipo_guardado, JSON.stringify(votacion));
+      document.getElementById("mensajeConfirmacion").innerText = mensaje_ok;
+    }
+  </script>
+
+<script>
+function compararResultados() {
+  const oficiales = JSON.parse(localStorage.getItem("posiciones_oficiales"));
+  if (!oficiales) return alert("Faltan posiciones oficiales.");
+  const olga = JSON.parse(localStorage.getItem("votacion_Olga"));
+  const santi = JSON.parse(localStorage.getItem("votacion_Santi"));
+  if (!olga || !santi) return alert("Faltan votaciones de Olga o Santi.");
+
+  let aciertosOlga = 0;
+  let aciertosSanti = 0;
+  let detalle = "<h3>Coincidencias:</h3><ul>";
+
+  for (let i = 0; i < oficiales.length; i++) {
+    if (olga[i] === oficiales[i]) detalle += `<li>Olga acertó en ${paises[i]}</li>`, aciertosOlga++;
+    if (santi[i] === oficiales[i]) detalle += `<li>Santi acertó en ${paises[i]}</li>`, aciertosSanti++;
+  }
+  detalle += "</ul>";
+
+  let ganador = "Empate";
+  if (aciertosOlga > aciertosSanti) ganador = "Gana Olga";
+  else if (aciertosSanti > aciertosOlga) ganador = "Gana Santi";
+
+  document.getElementById("mensajeConfirmacion").innerHTML = `
+    <h2>Resultados</h2>
+    <p>Olga acertó ${aciertosOlga} posiciones.</p>
+    <p>Santi acertó ${aciertosSanti} posiciones.</p>
+    <h3>${ganador}</h3>${detalle}`;
+}
+</script>
