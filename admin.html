@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Eurovisión 2025 - Jurado</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .pais {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    input[type="number"] {
+      width: 50px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+    .resultados {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Eurovisión 2025</h1>
+  <h2>Página del Administrador</h2>
+
+  <div id="listaPaises"></div>
+  <button onclick="guardarOficiales()">Guardar Posiciones Oficiales</button>
+  <button onclick="compararResultados()">Comparar Resultados</button>
+
+  <div class="resultados" id="resultados"></div>
+
+  <script>
+    const paises = [...Array(26).keys()].map((i) => [
+      "Noruega – Kyle Alessandro (Lighter)",
+      "Luxemburgo – Laura Thorn (La poupée monte le son)",
+      "Estonia – Tommy Cash (Espresso Macchiato)",
+      "Israel – Yuval Raphael (New Day Will Rise)",
+      "Lituania – Katarsis (Tavo akys)",
+      "España – Melody (Esa diva)",
+      "Ucrania – Ziferblat (Bird of Pray)",
+      "Reino Unido – Remember Monday (What the Hell Just Happened?)",
+      "Austria – JJ (Wasted Love)",
+      "Islandia – VÆB (Róa)",
+      "Letonia – Tautumeitas (Bur man laimi)",
+      "Países Bajos – Claude (C'est la vie)",
+      "Finlandia – Erika Vikman (Ich komme)",
+      "Italia – Lucio Corsi (Volevo essere un duro)",
+      "Polonia – Justyna Steczkowska (Gaja)",
+      "Alemania – Abor & Tynna (Baller)",
+      "Grecia – Klavdia (Asteromáta)",
+      "Armenia – Parg (Survivor)",
+      "Suiza – Zoë Më (Voyage)",
+      "Malta – Miriana Conte (Serving)",
+      "Portugal – Napa (Deslocado)",
+      "Dinamarca – Sissal (Hallucination)",
+      "Suecia – KAJ (Bara Bada Bastu)",
+      "Francia – Louane (Maman)",
+      "San Marino – Gabry Ponte (Tutta l'Italia)",
+      "Albania – Shkodra Elektronike (Zjerm)"
+    ][i]);
+
+    const lista = document.getElementById("listaPaises");
+
+    paises.forEach((pais, i) => {
+      const div = document.createElement("div");
+      div.className = "pais";
+      div.innerHTML = `
+        <span>${i + 1}. ${pais}</span>
+        <input type="number" min="1" max="26" id="oficial-${i}" />
+      `;
+      lista.appendChild(div);
+    });
+
+    function guardarOficiales() {
+      const posiciones = [];
+      const usadas = new Set();
+      let error = false;
+
+      for (let i = 0; i < paises.length; i++) {
+        const val = parseInt(document.getElementById(`oficial-${i}`).value);
+        if (isNaN(val) || val < 1 || val > 26 || usadas.has(val)) {
+          error = true;
+          break;
+        }
+        usadas.add(val);
+        posiciones.push(val);
+      }
+
+      if (error || posiciones.length !== 26) {
+        alert("Debes introducir posiciones únicas del 1 al 26.");
+        return;
+      }
+
+      localStorage.setItem("posiciones_oficiales", JSON.stringify(posiciones));
+      alert("Posiciones oficiales guardadas.");
+    }
+
+    function compararResultados() {
+      const oficiales = JSON.parse(localStorage.getItem("posiciones_oficiales"));
+      if (!oficiales) {
+        alert("Debes guardar primero las posiciones oficiales.");
+        return;
+      }
+
+      const olga = JSON.parse(localStorage.getItem("votacion_Olga"));
+      const santi = JSON.parse(localStorage.getItem("votacion_Santi"));
+
+      if (!olga || !santi) {
+        alert("Faltan las votaciones de Olga o Santi.");
+        return;
+      }
+
+      let aciertosOlga = 0;
+      let aciertosSanti = 0;
+      let detalle = "<h3>Coincidencias:</h3><ul>";
+
+      for (let i = 0; i < oficiales.length; i++) {
+        if (olga[i] === oficiales[i]) {
+          aciertosOlga++;
+          detalle += `<li>Olga acertó en ${paises[i]}</li>`;
+        }
+        if (santi[i] === oficiales[i]) {
+          aciertosSanti++;
+          detalle += `<li>Santi acertó en ${paises[i]}</li>`;
+        }
+      }
+      detalle += "</ul>";
+
+      let ganador = "Empate";
+      if (aciertosOlga > aciertosSanti) ganador = "Gana Olga";
+      else if (aciertosSanti > aciertosOlga) ganador = "Gana Santi";
+
+      document.getElementById("resultados").innerHTML = `
+        <h2>Resultados</h2>
+        <p>Olga acertó ${aciertosOlga} posiciones.</p>
+        <p>Santi acertó ${aciertosSanti} posiciones.</p>
+        <h3>${ganador}</h3>
+        ${detalle}
+      `;
+    }
+  </script>
+</body>
+</html>
